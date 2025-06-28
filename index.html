@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FocusBubble - Distraction Tracker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #f1f5f9;
+      --accent: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --bg-primary: #ffffff;
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 480px;
+      margin: auto;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .header {
+      text-align: center;
+    }
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .tagline {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .stats-card, .action-card, .history-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      padding: 1.5rem;
+    }
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .log-button {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+    .log-button:hover {
+      background: #dc2626;
+    }
+    .input-section {
+      display: none;
+      margin-top: 1rem;
+      animation: slideDown 0.3s ease;
+    }
+    .input-section.visible {
+      display: block;
+    }
+    .input-field {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      margin-bottom: 1rem;
+      font-family: inherit;
+    }
+    .button-group {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .btn {
+      flex: 1;
+      padding: 0.75rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-secondary {
+      background: var(--secondary);
+      color: var(--text-secondary);
+    }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .clear-button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .history-list {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .history-item {
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+    }
+    .item-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    .day-divider {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin: 1rem 0 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      padding: 2rem 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="logo">FocusBubble</h1>
+      <p class="tagline">Track distractions, build awareness</p>
+    </header>
+
+    <div class="stats-card">
+      <div class="stat-item">
+        <span>Today's distractions</span>
+        <span class="stat-value" id="todayCount">0</span>
+      </div>
+    </div>
+
+    <div class="action-card">
+      <button class="log-button" id="logButton">Log Distraction</button>
+      <div class="input-section" id="inputSection">
+        <input
+          type="text"
+          class="input-field"
+          id="reasonInput"
+          placeholder="What distracted you?"
+        />
+        <div class="button-group">
+          <button class="btn btn-primary" id="submitButton">Save</button>
+          <button class="btn btn-secondary" id="cancelButton">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="history-card">
+      <div class="history-header">
+        <h3>History</h3>
+        <button class="clear-button" id="clearButton" style="display: none;">Clear all</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="empty-state">No distractions logged yet</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    class FocusBubble {
+      constructor() {
+        this.distractions = this.loadDistractions();
+        this.initEventListeners();
+        this.render();
+      }
+
+      initEventListeners() {
+        document.getElementById("logButton").addEventListener("click", () => this.showInput());
+        document.getElementById("submitButton").addEventListener("click", () => this.saveDistraction());
+        document.getElementById("cancelButton").addEventListener("click", () => this.hideInput());
+        document.getElementById("clearButton").addEventListener("click", () => this.clearHistory());
+
+        document.getElementById("reasonInput").addEventListener("keypress", (e) => {
+          if (e.key === "Enter") this.saveDistraction();
+          if (e.key === "Escape") this.hideInput();
+        });
+      }
+
+      showInput() {
+        document.getElementById("inputSection").classList.add("visible");
+        document.getElementById("reasonInput").focus();
+      }
+
+      hideInput() {
+        const input = document.getElementById("reasonInput");
+        document.getElementById("inputSection").classList.remove("visible");
+        input.value = "";
+      }
+
+      saveDistraction() {
+        const input = document.getElementById("reasonInput");
+        const reason = input.value.trim();
+        if (!reason) return;
+
+        const distraction = {
+          id: Date.now(),
+          timestamp: new Date().toISOString(),
+          reason: reason,
+          date: new Date().toDateString()
+        };
+
+        this.distractions.unshift(distraction);
+        this.saveToStorage();
+        this.render();
+        this.hideInput();
+        this.showFeedback();
+      }
+
+      showFeedback() {
+        const btn = document.getElementById("logButton");
+        const original = btn.textContent;
+        btn.textContent = "Logged!";
+        btn.style.background = "var(--success)";
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.style.background = "var(--accent)";
+        }, 1500);
+      }
+
+      getTodayCount() {
+        const today = new Date().toDateString();
+        return this.distractions.filter(d => d.date === today).length;
+      }
+
+      render() {
+        document.getElementById("todayCount").textContent = this.getTodayCount();
+        this.renderHistory();
+      }
+
+      renderHistory() {
+        const list = document.getElementById("historyList");
+        const clearBtn = document.getElementById("clearButton");
+
+        if (this.distractions.length === 0) {
+          list.innerHTML = `<div class="empty-state">No distractions logged yet</div>`;
+          clearBtn.style.display = "none";
+          return;
+        }
+
+        clearBtn.style.display = "block";
+        let html = "";
+        let currentDate = "";
+
+        this.distractions.forEach(d => {
+          if (d.date !== currentDate) {
+            currentDate = d.date;
+            const label = d.date === new Date().toDateString() ? "Today" : currentDate;
+            html += `<div class="day-divider">${label}</div>`;
+          }
+          const time = new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          html += `<div class="history-item">
+              <div class="item-time">${time}</div>
+              <div class="item-reason">${this.escapeHtml(d.reason)}</div>
+          </div>`;
+        });
+
+        list.innerHTML = html;
+      }
+
+      clearHistory() {
+        if (confirm("Clear all distraction history?")) {
+          this.distractions = [];
+          this.saveToStorage();
+          this.render();
+        }
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      loadDistractions() {
+        try {
+          const stored = localStorage.getItem("focusbubble_distractions");
+          if (!stored) return [];
+          return JSON.parse(stored);
+        } catch {
+          return [];
+        }
+      }
+
+      saveToStorage() {
+        localStorage.setItem("focusbubble_distractions", JSON.stringify(this.distractions));
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => new FocusBubble());
+  </script>
+</body>
+</html>
